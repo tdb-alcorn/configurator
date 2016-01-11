@@ -1,0 +1,67 @@
+Fri 01 Jan 2016 11:52:57 PM AEDT 
+
+
+want to: choose optimal layout for 2d polygons subject to various architecture and property development inspired constraints
+i.e. 2d space configurator
+
+how?
+1st, construct cost function that accounts for all desired constraints. variables must include all degrees of freedom of polygons
+2nd, minimise the cost function by applying gradient descent
+3rd, represent solution visually somehow
+
+e.g. parking space configurator: decrease cost for more units, increase cost for inaccessible units (subject to reasonable definition of accessible)
+Cost = (N-n) + (N - Sum_{parking spaces i} a_i) + \inf if any part of any space falls outside bounds of site
+where a_i is 1 if space is accessible and 0 if inaccessible
+and N is total area of site divided by area of each parking space, rounded down (represents theoretical max # of spaces that can be included in configuration)
+space is accessible if there is at least one entrance, meaning there must be one end open (an end is one of the short sides of the rectangle)
+an end is open if there is at least a half-car-length of clear area extending from it (see diagram)
+
+/////////////
+___________//
+|    |    |//
+|    |    |// <-parking spaces
+|    |    |//
+|    |    |//
+           // <-entrances of at least half car length
+           //
+/////////////
+Fig. 1: open car spaces
+
+////////
+______//
+|    |//
+|    |//
+|    |// <--
+|    |//   |
+______//   |-parking spaces
+|    |//   |
+|    |// <--
+|    |//
+|    |//
+////////
+Fig 2. closed parking spaces
+
+
+how to represent parking spaces? rectangle type with four corners, length and width attributes, helper methods for determining whether another rectangle intersects it, whether it is open, whether it is wholly within bounds
+
+how to draw on screen? python library for drawing 2d polygons?
+
+
+point b is contained by triangle if there is a solution to
+Ax = b
+where A is column vectors or two points of triangle (third point is origin, triangle must be translated to origin)
+
+next things:
+-implement within for rectangles and add it to cost function
+-randomize starting vector and make number of rectangles a parameter
+-take user drawn input for site outline poly
+-implement open and add it to cost function
+
+i will listen to the mouse and record coordinates of clicks, then turn that into a polygon for bounds
+-add submit button to finish drawing bounds: need to listen for this as well to begin main computation
+-add slider for intersect vs. out of bounds trade off
+-add input for number of spaces?
+-calculate area from bounding box
+
+Need to tune cost function I think, otherwise things seem to work okay
+
