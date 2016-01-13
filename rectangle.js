@@ -23,14 +23,13 @@ function Rectangle(length, width, centre, rotation) {
             });
         }
     }
-    this.sides = [];
+    var sides = [];
     for (var i=0; i<this.corners.length; i++) {
       for (var j=0; j<i; j++) {
-        if (this.corners[i].x == this.corners[j].x || this.corners[i].y == this.corners[j].y) {
-          this.sides.push([this.corners[i], this.corners[j]])
-        }
+        sides.push([this.corners[i], this.corners[j]]);
       }
     }
+    this.sides = sides.sort(function(side) {line.length(side)}).slice(0, 4);
     this.length = length;
     this.width = width;
     this.centre = centre;
@@ -50,15 +49,15 @@ Rectangle.prototype.draw = function draw(two) {
     this.path = rect;
 };
 
-Rectangle.prototype.intersects = function intersects(poly) {
+Rectangle.prototype.intersects = function intersects(poly, nsamples) {
     // poly must have attribute corners, which is an array of points
     // that are assumed to be in a sensible order for enclosing
     // a polygon
     if (poly.constructor === Rectangle) {
         // sample from one and check if it is contained in the other
-        var n = 100;
+        var n = nsamples ? nsamples : 1000;
         var cost = 0;
-        var samples = this.sample(n);
+        var samples = this.sampleFrame(n);
         // call vectorized contains here
         for (var i=0; i<samples.length; i++) {
             if (poly.contains(samples[i])) {
@@ -73,12 +72,12 @@ Rectangle.prototype.intersects = function intersects(poly) {
     }
 };
 
-Rectangle.prototype.within = function within(poly) {
+Rectangle.prototype.within = function within(poly, nsamples) {
     // poly assumed same as intersects
     // checks that rectangle lies within polygon
-    var n = 100;
+    var n = nsamples ? nsamples : 1000;
     var cost = 0;
-    var samples = this.sample(n);
+    var samples = this.sampleFrame(n);
     for (var i=0; i<samples.length; i++) {
         if (!polygon.contains(poly, samples[i])) {
             cost += 1;
@@ -125,6 +124,17 @@ Rectangle.prototype.sample = function sample(n) {
         } else {
             samples.push(triangle.sample(triangles[1])[0]);
         }
+    }
+    return samples;
+};
+
+Rectangle.prototype.sampleFrame = function sampleFrame(n) {
+    // TODO: speed this up by using vectorization available within triangle.sample?
+    n = n != null ? n : 1;
+    var samples = [];
+    for (var i=0; i<n; i++) {
+        var choose = Math.floor(Math.random()*4);
+        samples.push(line.sample(this.sides[choose]));
     }
     return samples;
 };

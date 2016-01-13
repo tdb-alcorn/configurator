@@ -6,6 +6,7 @@ var triangle = require("./triangle.js");
 var angle = require("./angle.js");
 var point = require("./point.js");
 var polygon = require("./polygon.js");
+var line = require("./line.js");
 
 //var configurator = (typeof exports === "undefined") ? (function configurator() {}) : (exports);
 //if (typeof global !== "undefined") { global.configurator = configurator; }
@@ -13,6 +14,8 @@ var polygon = require("./polygon.js");
 //configurator.version = "0.0.0";
 
 // interface Point: {x, y}
+
+var Nspaces = 5;
 
 var space = {
     length: 100,
@@ -50,19 +53,34 @@ function cost(vector) {
         // check that no rect intersects this rect
         for (var j=0; j<rects.length; j++) {
             if (j!=i) {
-               cost += 100 * rects[i].intersects(rects[j]);
+              var intersect_cost = Math.pow(100 * rects[i].intersects(rects[j]), 4);
+              // console.log('intersection cost for ['+i+']['+j+']: '+intersect_cost);
+              cost += intersect_cost;
             }
         }
-        // check that this rect is open
+        // TODO: check that this rect is open
         // check that rect is not out of bounds
-        cost += 1000 * rects[i].within(bounds.corners);
+        var bounds_cost = Math.pow(100 * rects[i].within(bounds.corners), 4);
+        //console.log('bounds cost for ['+i+']: '+bounds_cost);
+        cost += bounds_cost;
+        var centre_dist_cost = 5 * Math.pow(line.lengthManhattan([bounds.centre, rects[i].centre])/bounds.side, 2);
+        cost += centre_dist_cost;
     }
-    console.log(cost);
-    return cost;
+    var fcost = Math.pow(cost, 2);
+    //console.log('Total cost on this iteration: ' + fcost);
+    return fcost;
 }
 
 function costie(Nmax) {
   return cost;
+}
+
+function drawAndCost(vector) {
+  return function(vector, two, bounds) {
+    var rects = unvectorise(vector);
+    draw(two, bounds, rects);
+    return cost(vector);
+  };
 }
 
 function drawBounds(two, poly) {
@@ -85,6 +103,15 @@ function startingVector(n) {
     vec.push(0);  // always start with 0 rotation
   }
   return vec;
+}
+
+function draw(two, bounds, rects) {
+  two.clear();
+  drawBounds(two, bounds.corners);
+  for (var i=0; i<rects.length; i++) {
+      rects[i].draw(two);
+  }
+  two.update();
 }
 
 var bounds = {corners: [],
@@ -118,37 +145,68 @@ function main() {
 
       var bb = polygon.boundingBox(bounds.corners);
       bounds.area = (bb.x.max-bb.x.min)*(bb.y.max-bb.y.min);
+      bounds.centre = polygon.centre(bounds.corners);
+      bounds.side = Math.sqrt(bounds.area);
       var Nmax = Math.floor(bounds.area/space.area);
 
       var solutionElt = document.getElementById('solution');
       var params = {width: 500, height: 500};
       var two = new Two(params).appendTo(solutionElt);
 
-      drawBounds(two, bounds.corners);
+      var boosted = false;
+      var Nvecs = 1;
+      var mincost;
+      var solution;
 
-      var svec = startingVector(10);
-
-      var rects = unvectorise(svec);
-
-      for (var i=0; i<rects.length; i++) {
-          rects[i].draw(two);
+      if (!boosted) {
+        for (var i=0; i<Nvecs; i++) {
+          var svec = startingVector(Nspaces);
+          var tol = 1;
+          var result = numeric.uncmin(cost, svec, tol);
+          if (!solution || !mincost || result.f < mincost) {
+            mincost = result.f;
+            solution = result.solution;
+          }
+        }
+      } else {
+        var svecs = [];
+        for (var i=0; i<Nvecs; i++) {
+          svecs.push(startingVector(Nspaces));
+        }
+        var result = minimise(cost,
+            soln(minimise(cost, svecs, 1).sort(solnCost).slice(0, Math.ceil(Nvecs/5))),
+            0.1).sort(solnCost)[0];
+        solution = result.solution;
+        mincost = result.f;
       }
-      two.update();
 
-      // minimise it
-      // need shim to vectorise and shim to unvectorise
-      var tol = 0.1;
-      var solution = numeric.uncmin(cost, svec, tol).solution;
-      console.log(solution);
+      console.log('cost: ' + mincost)
+      console.log('solution: ' + solution);
       var rects = unvectorise(solution);
-
-      for (var i=0; i<rects.length; i++) {
-          rects[i].draw(two);
-      }
-      two.update();
-
+      draw(two, bounds, rects);
   });
 
+}
+
+function solnCost(result) {
+  return result.f;
+}
+
+function soln(result) {
+  var res = [];
+  for (var i=0; i<result.length; i++) {
+    res.push(result[i].solution);
+  }
+  return res;
+}
+
+function minimise(cost, vectors, tol) {
+  tol = tol ? tol : 0.1;
+  var result = [];
+  for (var i=0; i<vectors.length; i++) {
+    result.push(numeric.uncmin(cost, vectors[i], tol));
+  }
+  return result;
 }
 
 document.addEventListener('DOMContentLoaded', main);

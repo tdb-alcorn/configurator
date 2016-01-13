@@ -1,3 +1,5 @@
+var point = require('./point.js');
+
 function intersect(l1, l2) {
     var p0 = l1[0];
     var p1 = l1[1];
@@ -46,6 +48,43 @@ function intersect(l1, l2) {
     return p;
 }
 
+function collinear(A, B, C, tol) {
+  tol = tol ? tol : 0.001;
+  return Math.abs(A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y)) < tol;
+}
+
+function sample(line) {
+  var rand = Math.random();
+  var p = point.subtract(line[1], line[0]);
+  return point.add(point.scale(p, rand), line[0]);
+}
+
+function contains(line, p, tol) {
+  if (_between(p.x, line[0].x, line[1].x) && _between(p.y, line[0].y, line[1].y)) {
+    return collinear(line[0], line[1], p, tol);
+  } else {
+    return false;
+  }
+}
+
+function length(line) {
+  var dy = Math.abs(line[0].y - line[1].y);
+  var dx = Math.abs(line[0].x - line[1].x);
+  return Math.sqrt(Math.pow(dy, 2) + Math.pow(dx, 2));
+}
+
+function lengthManhattan(line) {
+  return Math.abs(line[0].y - line[1].y) + Math.abs(line[0].x - line[1].x);
+}
+
+function _between(n, bound1, bound2) {
+  return ((n <= bound2 && n >= bound1) || (n >= bound2 && n >= bound1));
+}
+
 module.exports = {
-  intersect: intersect
+  intersect: intersect,
+  sample: sample,
+  contains: contains,
+  length: length,
+  lengthManhattan: lengthManhattan,
 }

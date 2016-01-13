@@ -23,8 +23,14 @@ describe('Triangle', function() {
 });
 
 describe('Rectangle', function() {
+  // describe('.sides', function() {
+  //   var r1 = new Rectangle(10, 10, {x: 5, y: 5}, 0);
+  //   it('should have these sides', function() {
+  //     // checking that all the sides are there is actually kind of annoying... :(
+  //   });
+  // });
   describe('#intersects()', function() {
-    var r1 = new Rectangle(10, 10, {x: 5, y:5}, 0);
+    var r1 = new Rectangle(10, 10, {x: 5, y: 5}, 0);
     it('should intersect this', function() {
       var r2 = new Rectangle(10, 10, {x: 9, y: 9}, 0);
       assert(r1.intersects(r2) > 0);
@@ -63,11 +69,19 @@ describe('Rectangle', function() {
       {x:0, y:20}];
     it('should be within', function() {
       var r1 = new Rectangle(1, 1, {x:5, y:5}, 0);
+      console.log(r1.within(poly));
       assert(r1.within(poly) == 0);
     });
     it('should be without', function() {
       var r2 = new Rectangle(1, 1, {x: 50, y: 50}, 0);
       assert(r2.within(poly) > 0);
+    });
+  });
+  describe('#sampleFrame()', function() {
+    var r1 = new Rectangle(10, 10, {x:5, y:5}, 0);
+    it('should contain a sample', function() {
+      var sample = r1.sampleFrame(1)[0];
+      assert(r1.contains(sample));
     });
   });
 });
@@ -82,6 +96,31 @@ describe('Line', function() {
     it('should not intersect', function() {
       var l2 = [{x: 0, y: 1}, {x: 1, y: 2}];
       assert(!line.intersect(l1, l2));
+    });
+  });
+  describe('#contains', function() {
+    var l = [{x: 0, y: 0}, {x: 1, y: 1}];
+    it('should contain this', function() {
+      assert(line.contains(l, {x: 0.5, y: 0.5}));
+    });
+    it('should not contain this', function() {
+      assert(!line.contains(l, {x: 1, y: 0}));
+    });
+  });
+  describe('#sample', function() {
+    var l = [{x: 0, y: 0}, {x: 1, y: 1}];
+    it('should contain a sample from it', function() {
+      assert(line.contains(l, line.sample(l)));
+    });
+    it('even when the line is vertical', function() {
+      var l2 = [{x: 0, y: 0}, {x:0, y:1}];
+      assert(line.contains(l2, line.sample(l2)));
+    });
+  });
+  describe('#length()', function() {
+    var l = [{x: 0, y: 0}, {x: 1, y: 1}];
+    it('should be 5', function () {
+      assert(line.length([{x:0, y:0}, {x:3, y:4}]) == 5);
     });
   });
 });

@@ -28,6 +28,17 @@ function contains(poly, p) {
   return false;
 }
 
+function centre(poly) {
+  var x = 0;
+  var y = 0;
+  for (var i=0; i<poly.length; i++) {
+    x += poly[i].x;
+    y += poly[i].y;
+  }
+  return {x: x/poly.length,
+          y: y/poly.length};
+}
+
 function boundingBox(poly) {
   var res = {
     x: {min: null,
@@ -52,4 +63,5 @@ module.exports = {
   triangulate: triangulate,
   contains: contains,
   boundingBox: boundingBox,
+  centre: centre,
 }
